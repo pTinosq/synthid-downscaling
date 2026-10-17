@@ -1,4 +1,4 @@
-module github.com/pTinosq/synthid-downscaling/downscale
+module github.com/pTinosq/synthid-downscaling/apps/prepare
 
 go 1.26.0
 
