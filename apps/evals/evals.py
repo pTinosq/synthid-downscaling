@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import json
 import mimetypes
-from datetime import datetime
 from pathlib import Path
 
 from openai import AsyncOpenAI
@@ -21,42 +20,56 @@ async def check(client: AsyncOpenAI, image: Path) -> dict:
     }
 
 
-async def evaluate(folder: Path, concurrency: int, out: Path) -> None:
+def previous_verdicts(results: Path) -> dict[str, bool]:
+    if not results.exists():
+        return {}
+    rows = map(json.loads, results.read_text().splitlines())
+    return {r["image"]: r["synthid"] for r in rows if "synthid" in r}
+
+
+async def evaluate(folder: Path, results: Path, concurrency: int) -> None:
     images = sorted(p for p in folder.rglob("*") if p.suffix.lower() in IMAGE_SUFFIXES)
-    if not images:
-        raise SystemExit(f"no images found in {folder}")
+    original = next((p for p in images if p.parent == folder and p.stem == "original"), None)
+    verdicts = previous_verdicts(results)
+    pending = [p for p in images if str(p.relative_to(folder)) not in verdicts]
 
     client = AsyncOpenAI(max_retries=5)
     limit = asyncio.Semaphore(concurrency)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    results.parent.mkdir(parents=True, exist_ok=True)
 
-    with out.open("w") as f:
+    with results.open("a") as f:
 
         async def run(image: Path) -> None:
             row = {"image": str(image.relative_to(folder))}
             async with limit:
                 try:
                     row |= await check(client, image)
+                    verdicts[row["image"]] = row["synthid"]
                 except Exception as e:
                     row["error"] = repr(e)
             f.write(json.dumps(row) + "\n")
             f.flush()
             print(f"{row['image']}: {row.get('synthid', 'error')}")
 
-        await asyncio.gather(*map(run, images))
+        if original in pending:
+            pending.remove(original)
+            await run(original)
+        if original and not verdicts.get(original.name):
+            raise SystemExit(f"SynthID not confirmed in {original.name}, so the downscaled images were skipped")
 
-    print(f"wrote {len(images)} results to {out}")
+        await asyncio.gather(*map(run, pending))
+
+    missing = len(images) - len(verdicts)
+    print(f"{len(verdicts)} of {len(images)} images checked" + (f", run again to retry {missing}" if missing else ""))
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Check every image in a folder for SynthID.")
     parser.add_argument("folder", type=Path)
+    parser.add_argument("results", type=Path, help="JSONL file; images already checked in it are skipped")
     parser.add_argument("--concurrency", type=int, default=16, help="max requests in flight")
-    parser.add_argument("--out", type=Path, help="results file (default: results/<timestamp>.jsonl)")
     args = parser.parse_args()
-
-    out = args.out or Path("results") / f"{datetime.now():%Y%m%d-%H%M%S}.jsonl"
-    asyncio.run(evaluate(args.folder, args.concurrency, out))
+    asyncio.run(evaluate(args.folder, args.results, args.concurrency))
 
 
 if __name__ == "__main__":

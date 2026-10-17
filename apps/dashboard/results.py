@@ -7,7 +7,7 @@ DATA = Path(__file__).resolve().parents[2] / "data"
 
 
 def load(path: Path) -> pd.DataFrame:
-    df = pd.read_json(path, lines=True)
+    df = pd.read_json(path, lines=True).drop_duplicates("image", keep="last")
     for column in ("synthid", "detail"):
         if column not in df:
             df[column] = pd.NA

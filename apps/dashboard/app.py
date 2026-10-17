@@ -4,18 +4,18 @@ import results
 
 st.set_page_config(page_title="SynthID downscaling", layout="wide")
 
-runs = sorted(results.DATA.glob("results/*/*.jsonl"), reverse=True)
-if not runs:
+sets = sorted(results.DATA.glob("results/*.jsonl"))
+if not sets:
     st.info(f"No results yet. Run `just evals <name>` to populate {results.DATA / 'results'}.")
     st.stop()
 
-run = st.sidebar.selectbox("Run", runs, format_func=lambda p: f"{p.parent.name} / {p.stem}")
-images = results.DATA / "images" / run.parent.name
-df = results.load(run)
+path = st.sidebar.selectbox("Image set", sets, format_func=lambda p: p.stem)
+images = results.DATA / "images" / path.stem
+df = results.load(path)
 
-st.title(run.parent.name)
+st.title(path.stem)
 if "error" in df and (errors := df["error"].notna().sum()):
-    st.warning(f"{errors} of {len(df)} requests failed.")
+    st.warning(f"{errors} of {len(df)} images have no verdict yet. Run `just evals {path.stem}` again to retry them.")
 
 st.pyplot(results.plot(df))
 st.subheader("Breakdown scale")

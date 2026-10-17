@@ -25,18 +25,20 @@ Run all commands from the repo root. Dependencies install automatically on the f
 1. Generate downscaled versions of an image:
 
    ```sh
-   just prepare cat.png
+   just prepare gemini_dog.jpeg
    ```
 
-   An interactive picker asks for the resampling methods. The images go to `data/images/cat/`.
+   An interactive picker asks for the resampling methods. The images go to `data/images/gemini_dog/`.
 
 2. Check each image for SynthID:
 
    ```sh
-   just evals cat
+   just evals gemini_dog
    ```
 
-   The results go to `data/results/cat/<timestamp>.jsonl`.
+   The results go to `data/results/gemini_dog.jsonl`. The original image is checked first. If SynthID is not found in the original, the run stops.
+
+   The API allows approximately 20 checks per hour. If some checks fail, run the same command again later. It only checks the images that do not have a result.
 
 3. Look at the results in the dashboard:
 
@@ -44,15 +46,15 @@ Run all commands from the repo root. Dependencies install automatically on the f
    just dashboard
    ```
 
-To save the charts as PNG files instead, run `just plot data/results/cat/*.jsonl`.
+To save the chart as a PNG file instead, run `just plot gemini_dog`.
 
 ## Options
 
 | Command | Example |
 | --- | --- |
-| Set methods without the picker | `just prepare cat.png -methods lanczos,box` |
-| Set the scale range in percent | `just prepare cat.png -min 5 -max 95 -step 5` |
-| Send more requests at the same time | `just evals cat --concurrency 32` |
+| Set methods without the picker | `just prepare gemini_dog.jpeg -methods lanczos,box` |
+| Set the scale range in percent | `just prepare gemini_dog.jpeg -min 5 -max 95 -step 5` |
+| Send more requests at the same time | `just evals gemini_dog --concurrency 32` |
 
 Run `just` to see all commands.
 
