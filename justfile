@@ -10,3 +10,11 @@ prepare image *flags:
 # Ask each model whether the images in data/images/<name> carry SynthID
 evals name *flags:
     cd apps/evals && uv run evals.py "{{justfile_directory()}}/data/images/{{name}}" --out "{{justfile_directory()}}/data/results/{{name}}/$(date +%Y%m%d-%H%M%S).jsonl" {{flags}}
+
+# Open the results dashboard in the browser
+dashboard:
+    cd apps/dashboard && uv run streamlit run app.py
+
+# Render detection-rate charts next to each results file, e.g. just plot data/results/cat/*.jsonl
+plot +results:
+    cd apps/dashboard && uv run plot.py {{results}}
