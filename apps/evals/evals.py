@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import json
 import mimetypes
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -38,7 +39,7 @@ class Checker:
                     file=(image.name, image.read_bytes(), mimetypes.guess_type(image)[0])
                 )
             except openai.RateLimitError as e:
-                self.resume_at = max(self.resume_at, time.time() + float(e.response.headers.get("retry-after", 60)))
+                self.resume_at = max(self.resume_at, time.time() + retry_delay(e))
                 print(f"rate limited, resuming at {datetime.fromtimestamp(self.resume_at):%H:%M:%S}")
                 continue
             except (openai.APIConnectionError, openai.InternalServerError) as e:
@@ -50,6 +51,13 @@ class Checker:
                 "synthid": signals["synthid"].outcome == "detected",
                 "detail": ", ".join(f"{r.type}: {r.outcome}" + (f" ({r.model})" if r.model else "") for r in result.results),
             }
+
+
+def retry_delay(error: openai.RateLimitError) -> float:
+    if "retry-after" in error.response.headers:
+        return float(error.response.headers["retry-after"])
+    match = re.search(r"try again after ([\d.]+) seconds", error.message)
+    return float(match[1]) if match else 60
 
 
 def previous_verdicts(results: Path) -> dict[str, bool]:
