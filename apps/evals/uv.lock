@@ -30,14 +30,10 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "openai" },
-    { name = "pydantic" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "openai", specifier = ">=2.52" },
-    { name = "pydantic", specifier = ">=2" },
-]
+requires-dist = [{ name = "openai", specifier = ">=2.52" }]
 
 [[package]]
 name = "h11"

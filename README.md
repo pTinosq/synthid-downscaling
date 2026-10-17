@@ -16,7 +16,7 @@ This repo measures how much you can downscale an AI-generated image before Synth
    cp .env.example .env
    ```
 
-3. Add your `OPENAI_API_KEY` to `.env`. Add `OPENROUTER_API_KEY` only if you use LLM detectors.
+3. Add your `OPENAI_API_KEY` to `.env`.
 
 Run all commands from the repo root. Dependencies install automatically on the first run.
 
@@ -52,22 +52,19 @@ To save the charts as PNG files instead, run `just plot data/results/cat/*.jsonl
 | --- | --- |
 | Set methods without the picker | `just prepare cat.png -methods lanczos,box` |
 | Set the scale range in percent | `just prepare cat.png -min 5 -max 95 -step 5` |
-| Add LLM detectors | `just evals cat --detectors openai-provenance,google/gemini-3.8-flash` |
 | Send more requests at the same time | `just evals cat --concurrency 32` |
 
 Run `just` to see all commands.
 
-## Detectors
+## Detection
 
-`openai-provenance` is the default. It uses OpenAI's [Content Provenance API](https://developers.openai.com/api/docs/guides/content-provenance) to verify the SynthID watermark. This API only finds OpenAI watermarks, so use images from an OpenAI image model.
-
-Any other detector name is an OpenRouter model. The model looks at the image and gives an opinion. It cannot read the watermark, so use it only as a baseline.
+`just evals` uses OpenAI's [Content Provenance API](https://developers.openai.com/api/docs/guides/content-provenance) to verify the SynthID watermark. This API only finds OpenAI watermarks, so use images from an OpenAI image model.
 
 ## Layout
 
 | Path | Contents |
 | --- | --- |
 | `apps/prepare` | Go CLI that downscales images |
-| `apps/evals` | Python script that runs the detectors |
+| `apps/evals` | Python script that checks images for SynthID |
 | `apps/dashboard` | Streamlit dashboard and chart script |
 | `data/` | Generated images and results (not in git) |
