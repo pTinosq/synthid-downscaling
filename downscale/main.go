@@ -20,7 +20,7 @@ func main() {
 	minPct := flag.Int("min", 10, "smallest scale, in percent of the original size")
 	maxPct := flag.Int("max", 90, "largest scale, in percent of the original size")
 	step := flag.Int("step", 10, "percent between consecutive scales")
-	names := flag.String("methods", "all", "comma-separated resampling methods: all, "+strings.Join(methodNames(), ", "))
+	names := flag.String("methods", "", "comma-separated resampling methods, or all (default: interactive picker)\navailable: "+strings.Join(methodNames(), ", "))
 	out := flag.String("out", "", "output directory (default: <image>_downscaled next to the input)")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: downscale [flags] <image>\n\n")
@@ -43,11 +43,9 @@ func run(src, out, names string, minPct, maxPct, step int) error {
 	if err != nil {
 		return err
 	}
-	selected := methods
-	if names != "all" {
-		if selected, err = lookupMethods(strings.Split(names, ",")); err != nil {
-			return err
-		}
+	selected, err := selectMethods(names)
+	if err != nil {
+		return err
 	}
 	img, err := load(src)
 	if err != nil {
@@ -75,6 +73,16 @@ func run(src, out, names string, minPct, maxPct, step int) error {
 	}
 	fmt.Printf("wrote %d images to %s\n", len(selected)*len(scales), out)
 	return nil
+}
+
+func selectMethods(names string) ([]method, error) {
+	switch names {
+	case "":
+		return pickMethods()
+	case "all":
+		return methods, nil
+	}
+	return lookupMethods(strings.Split(names, ","))
 }
 
 func percentages(minPct, maxPct, step int) ([]int, error) {
