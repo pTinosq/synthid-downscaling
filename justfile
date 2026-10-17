@@ -17,4 +17,4 @@ dashboard:
 
 # Render detection-rate charts next to each results file, e.g. just plot data/results/cat/*.jsonl
 plot +results:
-    cd apps/dashboard && uv run plot.py {{results}}
+    uv run --project apps/dashboard apps/dashboard/plot.py {{results}}
