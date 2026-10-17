@@ -28,17 +28,19 @@ Run all commands from the repo root. Dependencies install automatically on the f
    just prepare gemini_dog.jpeg
    ```
 
-   An interactive picker asks for the resampling methods. The images go to `data/images/gemini_dog/`.
+   An interactive picker asks for the resampling methods. The tool makes one image for each method at each scale from 1% to 99%. The images go to `data/images/gemini_dog/`.
 
-2. Check each image for SynthID:
+2. Find the scale at which each method loses SynthID:
 
    ```sh
-   just evals gemini_dog
+   caffeinate -i just evals gemini_dog
    ```
 
-   The results go to `data/results/gemini_dog.jsonl`. The original image is checked first. If SynthID is not found in the original, the run stops.
+   This can run for hours, so leave it on overnight. `caffeinate -i` stops your Mac from sleeping during the run.
 
-   The API allows approximately 20 checks per hour. If some checks fail, run the same command again later. It only checks the images that do not have a result.
+   The script checks the original image first. If SynthID is not found in the original, it stops. Then it does a binary search over the scales of each method, so it only checks approximately 7 images per method. When the API rate limit is reached, the script waits and continues.
+
+   The results go to `data/results/gemini_dog.jsonl`. If you stop the script, run the same command again. It continues from where it stopped.
 
 3. Look at the results in the dashboard:
 
@@ -54,13 +56,14 @@ To save the chart as a PNG file instead, run `just plot gemini_dog`.
 | --- | --- |
 | Set methods without the picker | `just prepare gemini_dog.jpeg -methods lanczos,box` |
 | Set the scale range in percent | `just prepare gemini_dog.jpeg -min 5 -max 95 -step 5` |
-| Send more requests at the same time | `just evals gemini_dog --concurrency 32` |
 
 Run `just` to see all commands.
 
 ## Detection
 
 `just evals` uses OpenAI's [Content Provenance API](https://developers.openai.com/api/docs/guides/content-provenance) to verify the SynthID watermark. This API only finds OpenAI watermarks, so use images from an OpenAI image model.
+
+The binary search assumes that when a method loses SynthID at one scale, it also loses it at all smaller scales.
 
 ## Layout
 

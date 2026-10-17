@@ -18,9 +18,9 @@ import (
 )
 
 func main() {
-	minPct := flag.Int("min", 10, "smallest scale, in percent of the original size")
-	maxPct := flag.Int("max", 90, "largest scale, in percent of the original size")
-	step := flag.Int("step", 10, "percent between consecutive scales")
+	minPct := flag.Int("min", 1, "smallest scale, in percent of the original size")
+	maxPct := flag.Int("max", 99, "largest scale, in percent of the original size")
+	step := flag.Int("step", 1, "percent between consecutive scales")
 	names := flag.String("methods", "", "comma-separated resampling methods, or all (default: interactive picker)\navailable: "+strings.Join(methodNames(), ", "))
 	out := flag.String("out", "", "output directory (default: <image>_downscaled next to the input)")
 	flag.Usage = func() {
