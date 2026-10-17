@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"image"
@@ -47,12 +48,22 @@ func run(src, out, names string, minPct, maxPct, step int) error {
 	if err != nil {
 		return err
 	}
-	img, err := load(src)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("decode %s: %w", src, err)
+	}
 	if out == "" {
 		out = strings.TrimSuffix(src, filepath.Ext(src)) + "_downscaled"
+	}
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(out, "original"+filepath.Ext(src)), data, 0o644); err != nil {
+		return err
 	}
 
 	var g errgroup.Group
@@ -106,19 +117,6 @@ func resize(src image.Image, s draw.Scaler, pct int) image.Image {
 	dst := image.NewRGBA(image.Rect(0, 0, w, h))
 	s.Scale(dst, dst.Bounds(), src, b, draw.Src, nil)
 	return dst
-}
-
-func load(path string) (image.Image, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	img, _, err := image.Decode(f)
-	if err != nil {
-		return nil, fmt.Errorf("decode %s: %w", path, err)
-	}
-	return img, nil
 }
 
 func save(path string, img image.Image) error {
