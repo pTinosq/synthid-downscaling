@@ -18,28 +18,28 @@ def load(path: Path) -> pd.DataFrame:
 
 def detection_rates(df: pd.DataFrame) -> pd.DataFrame:
     answered = df.dropna(subset=["synthid"]).astype({"synthid": float})
-    return answered.groupby(["model", "method", "scale"], as_index=False)["synthid"].mean()
+    return answered.groupby(["detector", "method", "scale"], as_index=False)["synthid"].mean()
 
 
 def breakdown(df: pd.DataFrame) -> pd.DataFrame:
-    """Largest scale at which each model stops detecting SynthID, per method."""
+    """Largest scale at which each detector stops detecting SynthID, per method."""
     rates = detection_rates(df)
     missed = rates[(rates["synthid"] < 0.5) & (rates["method"] != "original")]
-    return missed.groupby(["model", "method"])["scale"].max().unstack("method")
+    return missed.groupby(["detector", "method"])["scale"].max().unstack("method")
 
 
 def plot(df: pd.DataFrame) -> Figure:
     rates = detection_rates(df)
-    models = sorted(rates["model"].unique())
-    fig = Figure(figsize=(6 * len(models), 4), layout="constrained")
-    axes = fig.subplots(1, len(models), sharey=True, squeeze=False)[0]
-    for ax, model in zip(axes, models):
-        for method, group in rates[rates["model"] == model].groupby("method"):
+    detectors = sorted(rates["detector"].unique())
+    fig = Figure(figsize=(6 * len(detectors), 4), layout="constrained")
+    axes = fig.subplots(1, len(detectors), sharey=True, squeeze=False)[0]
+    for ax, detector in zip(axes, detectors):
+        for method, group in rates[rates["detector"] == detector].groupby("method"):
             if method == "original":
                 ax.axhline(group["synthid"].iloc[0], color="black", linestyle="--", label=method)
             else:
                 ax.plot(group["scale"], group["synthid"], marker="o", label=method)
-        ax.set(title=model, xlabel="scale (%)", ylim=(-0.05, 1.05))
+        ax.set(title=detector, xlabel="scale (%)", ylim=(-0.05, 1.05))
         ax.invert_xaxis()
     axes[0].set_ylabel("SynthID detection rate")
     axes[-1].legend(loc="lower left")

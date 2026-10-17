@@ -2,4 +2,4 @@
 name = "evals"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["openai>=1.60", "pydantic>=2"]
+dependencies = ["openai>=2.52", "pydantic>=2"]

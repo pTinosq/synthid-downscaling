@@ -35,7 +35,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "openai", specifier = ">=1.60" },
+    { name = "openai", specifier = ">=2.52" },
     { name = "pydantic", specifier = ">=2" },
 ]
 
